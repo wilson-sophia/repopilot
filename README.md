@@ -6,6 +6,10 @@
 
 ![RepoPilot 实际运行界面](docs/images/research-workspace.png)
 
+2026-10-22 已交付至私有仓库 [wilson-sophia/repopilot](https://github.com/wilson-sophia/repopilot) 的 `main`。[正式推送的 GitHub Actions 验证](https://github.com/wilson-sophia/repopilot/actions/runs/39776035384) 已全部通过，包括测试、重启持久性、生产构建和生产 HTTP 冒烟。
+
+已验证的代码提交为 `fe4c6951ba9b859ab549b61b1b2cc35c5b08d4e0`。此后补充的交付记录属于标记 `[skip ci]` 的纯文档更新，不修改已验证源码；完整范围见 [验证记录](docs/VERIFICATION.md)。
+
 ## 本地启动
 
 需要 Node.js 22 与 pnpm。默认启动器管理本地 PGlite 数据库，不需要先安装 Docker 或 PostgreSQL。

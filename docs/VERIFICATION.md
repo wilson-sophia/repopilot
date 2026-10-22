@@ -12,7 +12,7 @@
 
 ## 当前状态
 
-截至 2026-10-22，已完成本地初始化、类型检查、定向代码检查、28 个单元测试和 23 个 Playwright 测试入口的回归。Playwright 中包含的 20 个固定工程 / 检索案例全部通过。完整进程重启后的持久性、本地数据库独占锁、最终生产构建、生产 HTTP 冒烟、全量 NFT 文件追踪扫描，以及真实 GitHub API 的手动完整流程均已通过。真实模型供应商联调尚未执行，源码推送与远程 CI 尚待确认。
+截至 2026-10-22，已完成本地初始化、类型检查、代码规范检查、28 个单元测试和 23 个 Playwright 测试入口的回归。Playwright 中包含的 20 个固定工程 / 检索案例全部通过。完整进程重启后的持久性、本地数据库独占锁、最终生产构建、生产 HTTP 冒烟、全量 NFT 文件追踪扫描，以及真实 GitHub API 的手动完整流程均已通过。私有 `main` 已推送，正式推送触发的远程 CI 全部步骤成功；真实模型供应商联调仍未执行。
 
 ## 已确认结果
 
@@ -52,12 +52,20 @@
 
 真实 GitHub 验证未启用固定数据夹具，通过浏览器操作查询 `vercel/chatbot`，实际取得仓库信息与 Issue，报告完成并显示来源。此次使用的是明确标注的本地演示报告组织，不能据此声称调用了真实大模型。单次工具耗时不作为通用性能结论。
 
+## 远程交付：2026-10-22
+
+- 私有仓库：[wilson-sophia/repopilot](https://github.com/wilson-sophia/repopilot)，`main` 已完成推送。
+- 远程验证提交：`fe4c6951ba9b859ab549b61b1b2cc35c5b08d4e0`。
+- 正式推送 CI：[Actions run 39776035384](https://github.com/wilson-sophia/repopilot/actions/runs/39776035384)，状态 `completed`，结论 `success`。
+- CI 元数据与步骤结果快照：[evidence/github-ci-2026-10-22.json](evidence/github-ci-2026-10-22.json)。
+- 远程步骤全部通过：依赖、代码规范、类型、28 个单元测试、API 与 20 个固定案例、6 个浏览器流程、重启持久性、生产构建、生产 HTTP 冒烟及验证产物保存。
+- 随后追加的交付说明为纯文档更新，以 `[skip ci]` 标记，不修改应用源码、依赖锁定、测试或工作流。因此后续文档提交与上述已验证提交具有相同的已验证源码，不能将文档提交误认为又执行了一轮 CI。
+
 ## 尚未验证的外部范围
 
 - 未提供真实聊天模型 / Embedding 密钥，因此仅完成受控 HTTP 契约测试，没有真实模型供应商质量或稳定性结果。
 - 没有对独立外部 PostgreSQL 实例开展集成验证；本地 PGlite + PostgreSQL socket 路径已验证。
 - 保留的原始 Chatbot 路由可能依赖其 AI Gateway、Blob、Redis 等服务，本轮验证聚焦新增研究工作台。
-- 私有 GitHub 仓库已创建于 `https://github.com/wilson-sophia/repopilot`；源码推送和远程 CI 成功状态应在后续交付记录中确认。
 
 ## 中间集成记录
 
@@ -85,4 +93,4 @@ RESEARCH_MODE=demo RESEARCH_FIXTURES=1 PGLITE_DATA_DIR=.data/evaluation pnpm dev
 
 随后在另一个终端执行 `pnpm eval:research`。固定案例评测会保存 `test-results/research-evaluation.json`。这是固定工具数据下的工程与检索评估，不是真实模型推理能力评估。
 
-Playwright 配置输出 `test-results/research-results.json` 与 `playwright-report/research/`。CI 使用 `.github/workflows/research-ci.yml`，按依赖安装、数据库准备、代码规范、类型检查、单元测试、API 测试、浏览器测试、重启持久性、生产构建和生产 HTTP 冒烟的顺序执行。`pnpm typecheck` 内含 Next.js 类型生成，保证新克隆的 CI 不依赖本地开发产生的 `next-env.d.ts` / 路由类型。保留的上游工作流已调整为手动触发。远程 CI 状态需另外确认，不能从本地结果推定。
+Playwright 配置输出 `test-results/research-results.json` 与 `playwright-report/research/`。CI 使用 `.github/workflows/research-ci.yml`，按依赖安装、数据库准备、代码规范、类型检查、单元测试、API 测试、浏览器测试、重启持久性、生产构建和生产 HTTP 冒烟的顺序执行。`pnpm typecheck` 内含 Next.js 类型生成，保证新克隆的 CI 不依赖本地开发产生的 `next-env.d.ts` / 路由类型。保留的上游工作流已调整为手动触发。正式推送的远程结果已单独确认，见上方 Actions 链接与测试提交记录。

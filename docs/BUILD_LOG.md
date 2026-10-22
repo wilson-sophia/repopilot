@@ -56,6 +56,10 @@
 - 最终生产 HTTP 冒烟通过：访客经 2 次跳转建立会话，再次访问不跳转，项目创建 / 列表 / 删除成功，启动器退出码为 0，日志无类型错误、未处理拒绝或 WASM 中断。
 - 全量 NFT 扫描通过：24 个清单、7189 条引用、1011 个唯一文件，敏感目录 / 环境文件引用为 0；实际快照保存在 `docs/evidence/`。
 
-## 外部交付待确认项
+## 外部验证与交付结果
 
-本地单元、集成、重启持久性、生产构建、实际生产 HTTP 冒烟与全量 NFT 扫描均已有通过证据。真实聊天 / Embedding 密钥未提供，对应验证仅限模拟 HTTP 契约；真实 TLS 与外接 PostgreSQL 未作独立集成测试。私有仓库 `wilson-sophia/repopilot` 已创建，推送与远程 CI 状态待交付记录确认。CI 配置的存在也不代表远程 CI 已经成功运行。详细结果见 [VERIFICATION.md](VERIFICATION.md)。
+本地单元、集成、重启持久性、生产构建、实际生产 HTTP 冒烟与全量 NFT 扫描均已有通过证据。真实聊天 / Embedding 密钥未提供，对应验证仅限模拟 HTTP 契约；真实 TLS 与外接 PostgreSQL 未作独立集成测试。
+
+2026-10-22，私有仓库 `wilson-sophia/repopilot` 的 `main` 已完成推送。远程测试提交为 `fe4c6951ba9b859ab549b61b1b2cc35c5b08d4e0`，[正式推送的 Actions run 39776035384](https://github.com/wilson-sophia/repopilot/actions/runs/39776035384) 已完成且结论为 `success`，包含生产构建、生产冒烟与产物保存的全部步骤通过。
+
+其后的交付说明是标记 `[skip ci]` 的纯文档更新，不修改上述已验证源码，也不表示文档提交重新执行过 CI。详细范围见 [VERIFICATION.md](VERIFICATION.md)。

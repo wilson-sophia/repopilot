@@ -25,7 +25,8 @@
 - 等待 socket 的延后关闭回调并规范主动停止的退出码，避免数据库清理竞态。
 - 排除本地数据、测试输出和环境文件的构建追踪；全量扫描敏感引用为 0。
 - 本地通过 28 个单元测试、23 个 Playwright 入口（包含 20 个固定案例）、重启持久性、生产构建与生产 HTTP 冒烟。
-- 真实 GitHub 手动流程通过；真实聊天 / Embedding、TLS 与外接 PostgreSQL 仍未独立验证，远程 CI 待推送后确认。
+- 真实 GitHub 手动流程通过；真实聊天 / Embedding、TLS 与外接 PostgreSQL 仍未独立验证。
+- 2026-10-22 已推送私有 `main`；提交 `fe4c6951ba9b859ab549b61b1b2cc35c5b08d4e0` 的[正式 GitHub Actions 验证](https://github.com/wilson-sophia/repopilot/actions/runs/39776035384)全部通过。其后 `[skip ci]` 交付记录只改文档，保持已验证源码不变。
 
 ### 上游来源
 
