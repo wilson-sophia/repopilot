@@ -20,6 +20,9 @@ if (!process.env.AUTH_SECRET) {
 
 export async function setupDatabase() {
   if (!process.env.POSTGRES_URL) {
+    // Runtime setup must migrate the persistent directory, including NODE_ENV=production.
+    // Production build workers without the launcher may still use isolated memory.
+    process.env.RESEARCH_LOCAL_DB = "1";
     const lock = resolve(
       process.env.PGLITE_DATA_DIR || ".data/local-postgres",
       "repopilot.owner"

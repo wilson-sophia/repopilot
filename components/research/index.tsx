@@ -285,7 +285,7 @@ export function ResearchWorkspace() {
               {config !== null && (
                 <span className="research-mode-pill" data-mode={config.mode}>
                   <i />
-                  {config.mode === "demo" ? "演示模式" : "模型已连接"}
+                  {config.mode === "demo" ? "演示模式" : "真实模型模式"}
                 </span>
               )}
               {Boolean(project) && (

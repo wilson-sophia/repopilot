@@ -24,7 +24,8 @@
     "test:e2e:research": "playwright test -c playwright.research.config.ts tests/research-e2e",
     "eval:research": "node --import tsx scripts/evaluate-research.ts",
     "setup:local": "node --import tsx scripts/setup-local.ts",
-    "test:persistence": "node --import tsx scripts/check-research-persistence.ts"
+    "test:persistence": "node --import tsx scripts/check-research-persistence.ts",
+    "test:production": "node --import tsx scripts/check-production.ts"
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^3.0.75",

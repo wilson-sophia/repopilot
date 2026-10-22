@@ -16,9 +16,13 @@ const state = globalThis as typeof globalThis & {
 function localConnection() {
   if (!state.repopilotLocalDatabase) {
     const directory =
-      process.env.NODE_ENV === "production"
+      process.env.NODE_ENV === "production" &&
+      process.env.RESEARCH_LOCAL_DB !== "1"
         ? "memory://"
-        : resolve(process.env.PGLITE_DATA_DIR || ".data/local-postgres");
+        : resolve(
+            /* turbopackIgnore: true */ process.env.PGLITE_DATA_DIR ||
+              ".data/local-postgres"
+          );
     if (directory !== "memory://") {
       mkdirSync(directory, { recursive: true });
     }

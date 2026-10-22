@@ -20,6 +20,9 @@ async function serve() {
     }
     shuttingDown = true;
     await socket?.stop();
+    // The socket adapter defers connection-close handlers with setImmediate.
+    // Drain those callbacks while the engine is still available.
+    await new Promise<void>((done) => setImmediate(done));
     await localDatabase?.close();
     if (lockFile && lockOwned) {
       rmSync(lockFile, { force: true });
@@ -100,7 +103,9 @@ async function serve() {
         stdio: "inherit",
       }
     );
+    let stopRequested = false;
     const stop = () => {
+      stopRequested = true;
       child.kill("SIGTERM");
     };
     process.once("SIGINT", stop);
@@ -109,9 +114,12 @@ async function serve() {
       await cleanup();
       process.exitCode = 1;
     });
-    child.once("exit", async (code) => {
+    child.once("exit", async (code, signal) => {
       await cleanup();
-      process.exitCode = code ?? 0;
+      process.exitCode =
+        stopRequested && (signal === "SIGTERM" || code === 143)
+          ? 0
+          : (code ?? 1);
     });
   } catch (error) {
     await cleanup();

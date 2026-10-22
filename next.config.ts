@@ -5,6 +5,9 @@ const basePath = process.env.IS_DEMO === "1" ? "/demo" : "";
 
 const nextConfig: NextConfig = {
   ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
+  outputFileTracingExcludes: {
+    "/*": ["./.data/**/*", "./test-results/**/*", "./.env*"],
+  },
   serverExternalPackages: [
     "@electric-sql/pglite",
     "@electric-sql/pglite-pgvector",
