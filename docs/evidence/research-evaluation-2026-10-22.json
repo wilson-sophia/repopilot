@@ -1,0 +1,171 @@
+{
+  "engineeringSuccessRate": 1,
+  "evidenceRetrievalPassRate": 1,
+  "generatedAt": "2026-10-22T11:48:41.907Z",
+  "meanDurationMs": 150,
+  "passed": 20,
+  "results": [
+    {
+      "category": "retrieval",
+      "durationMs": 111,
+      "failures": [],
+      "id": "R01",
+      "passed": true,
+      "runId": "c7b82ace-d31a-4214-a9bd-8c9743f80299"
+    },
+    {
+      "category": "retrieval",
+      "durationMs": 110,
+      "failures": [],
+      "id": "R02",
+      "passed": true,
+      "runId": "621584be-9604-48ae-a154-c216dfd674e1"
+    },
+    {
+      "category": "retrieval",
+      "durationMs": 118,
+      "failures": [],
+      "id": "R03",
+      "passed": true,
+      "runId": "edbbd929-6e74-4392-a522-9fc2eb9f7dea"
+    },
+    {
+      "category": "retrieval",
+      "durationMs": 111,
+      "failures": [],
+      "id": "R04",
+      "passed": true,
+      "runId": "e99ecd59-336f-4614-99f1-633cee367b28"
+    },
+    {
+      "category": "retrieval",
+      "durationMs": 119,
+      "failures": [],
+      "id": "R05",
+      "passed": true,
+      "runId": "20e54360-d676-43f9-b3a0-25c2ee737a44"
+    },
+    {
+      "category": "retrieval",
+      "durationMs": 109,
+      "failures": [],
+      "id": "R06",
+      "passed": true,
+      "runId": "9a1cd86a-11a1-4c9a-89e1-bf4419b56496"
+    },
+    {
+      "category": "retrieval",
+      "durationMs": 106,
+      "failures": [],
+      "id": "R07",
+      "passed": true,
+      "runId": "7fd3e677-679a-4744-b516-8dde300e6126"
+    },
+    {
+      "category": "retrieval",
+      "durationMs": 110,
+      "failures": [],
+      "id": "R08",
+      "passed": true,
+      "runId": "8d425714-76b3-46a2-b858-7a8a9eb9c42f"
+    },
+    {
+      "category": "retrieval",
+      "durationMs": 105,
+      "failures": [],
+      "id": "R09",
+      "passed": true,
+      "runId": "59a30efb-2beb-4797-841e-c1dd3e2cc0fb"
+    },
+    {
+      "category": "retrieval",
+      "durationMs": 107,
+      "failures": [],
+      "id": "R10",
+      "passed": true,
+      "runId": "9e65f981-df75-484d-a817-ce221f81a819"
+    },
+    {
+      "category": "retrieval",
+      "durationMs": 110,
+      "failures": [],
+      "id": "R11",
+      "passed": true,
+      "runId": "ecb68555-d6f1-4660-8bb6-e0075753ecf0"
+    },
+    {
+      "category": "retrieval",
+      "durationMs": 125,
+      "failures": [],
+      "id": "R12",
+      "passed": true,
+      "runId": "86d183c4-cf92-4016-bd78-9cebfa4ac66d"
+    },
+    {
+      "category": "insufficient-evidence",
+      "durationMs": 139,
+      "failures": [],
+      "id": "N01",
+      "passed": true,
+      "runId": "b6bad0c8-12dd-4ac7-be36-d47742de0030"
+    },
+    {
+      "category": "insufficient-evidence",
+      "durationMs": 299,
+      "failures": [],
+      "id": "N02",
+      "passed": true,
+      "runId": "9e9d8a6b-f4ae-411f-8b69-4d20623b74b3"
+    },
+    {
+      "category": "insufficient-evidence",
+      "durationMs": 139,
+      "failures": [],
+      "id": "N03",
+      "passed": true,
+      "runId": "6942769c-73dd-4d92-97b3-d238f0b0df8f"
+    },
+    {
+      "category": "insufficient-evidence",
+      "durationMs": 95,
+      "failures": [],
+      "id": "N04",
+      "passed": true,
+      "runId": "37aa9d53-0f4c-4bff-9e7e-afeb9cddd260"
+    },
+    {
+      "category": "github-tools",
+      "durationMs": 265,
+      "failures": [],
+      "id": "G01",
+      "passed": true,
+      "runId": "38715a5d-f051-4dbf-b86b-b63b8ecd7edb"
+    },
+    {
+      "category": "github-tools",
+      "durationMs": 253,
+      "failures": [],
+      "id": "G02",
+      "passed": true,
+      "runId": "a2a7432c-4b07-414e-982a-536ce82c110a"
+    },
+    {
+      "category": "tool-failure",
+      "durationMs": 233,
+      "failures": [],
+      "id": "F01",
+      "passed": true,
+      "runId": "9e65dc1d-b2d6-4699-889c-e586c600dbb9"
+    },
+    {
+      "category": "tool-failure",
+      "durationMs": 228,
+      "failures": [],
+      "id": "F02",
+      "passed": true,
+      "runId": "2722be41-58dd-46ba-8663-f66eda5bba3e"
+    }
+  ],
+  "scope": "Deterministic engineering and retrieval evaluation; GitHub fixture mode required. Not a live LLM quality benchmark.",
+  "total": 20
+}
