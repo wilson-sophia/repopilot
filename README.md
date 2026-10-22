@@ -8,7 +8,7 @@
 
 2026-10-22 已交付至私有仓库 [wilson-sophia/repopilot](https://github.com/wilson-sophia/repopilot) 的 `main`。[正式推送的 GitHub Actions 验证](https://github.com/wilson-sophia/repopilot/actions/runs/39776035384) 已全部通过，包括测试、重启持久性、生产构建和生产 HTTP 冒烟。
 
-已验证的代码提交为 `fe4c6951ba9b859ab549b61b1b2cc35c5b08d4e0`。此后补充的交付记录属于标记 `[skip ci]` 的纯文档更新，不修改已验证源码；完整范围见 [验证记录](docs/VERIFICATION.md)。
+首次交付验证的提交为 `fe4c6951ba9b859ab549b61b1b2cc35c5b08d4e0`，后续兼容性修复及验证分别记录在 [验证记录](docs/VERIFICATION.md)。
 
 ## 本地启动
 
@@ -36,6 +36,8 @@ pnpm dev
 6. 试验资料不足、无效仓库、停止生成和重新发起，观察错误与记录。
 
 ## 接入真实模型
+
+推荐先接入阿里云百炼的 `qwen-plus` 与 `text-embedding-v4`，同一平台完成对话、工具调用和文档向量化。申请密钥、地域选择与完整配置见 [模型接入指南](docs/MODEL_SETUP.md)。
 
 在本地 `.env.local` 中配置，不要把真实密钥提交到 Git。
 

@@ -38,6 +38,9 @@ export async function embedTexts(
   texts: string[],
   signal?: AbortSignal
 ): Promise<number[][]> {
+  if (!texts.length) {
+    return [];
+  }
   if (researchMode() === "demo") {
     return texts.map(localEmbedding);
   }
@@ -54,26 +57,36 @@ export async function embedTexts(
     name: "research-embeddings",
   });
   try {
-    const result = await embedMany({
-      abortSignal: signal
-        ? AbortSignal.any([signal, AbortSignal.timeout(60_000)])
-        : AbortSignal.timeout(60_000),
-      maxRetries: 1,
-      model: provider.embeddingModel(
-        process.env.EMBEDDING_MODEL || "text-embedding-3-small"
-      ),
-      values: texts,
-    });
-    if (
-      result.embeddings.length !== texts.length ||
-      result.embeddings.some(
-        (vector) =>
-          !vector.length || vector.some((value) => !Number.isFinite(value))
-      )
-    ) {
-      throw new Error("Invalid embedding response");
+    const abortSignal = signal
+      ? AbortSignal.any([signal, AbortSignal.timeout(60_000)])
+      : AbortSignal.timeout(60_000);
+    const model = provider.embeddingModel(
+      process.env.EMBEDDING_MODEL || "text-embedding-3-small"
+    );
+    const embeddings: number[][] = [];
+    // Keep requests within providers such as Bailian's ten-input batch limit.
+    for (let start = 0; start < texts.length; start += 10) {
+      abortSignal.throwIfAborted();
+      const values = texts.slice(start, start + 10);
+      // biome-ignore lint/performance/noAwaitInLoops: Sequential batches share one timeout and stop immediately when cancelled.
+      const result = await embedMany({
+        abortSignal,
+        maxRetries: 1,
+        model,
+        values,
+      });
+      if (
+        result.embeddings.length !== values.length ||
+        result.embeddings.some(
+          (vector) =>
+            !vector.length || vector.some((value) => !Number.isFinite(value))
+        )
+      ) {
+        throw new Error("Invalid embedding response");
+      }
+      embeddings.push(...result.embeddings);
     }
-    return result.embeddings;
+    return embeddings;
   } catch (error) {
     signal?.throwIfAborted();
     // biome-ignore lint/style/useErrorCause: ResearchError accepts ErrorOptions as its third argument.

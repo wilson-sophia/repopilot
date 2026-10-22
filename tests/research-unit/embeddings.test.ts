@@ -132,3 +132,97 @@ test("malformed provider vector counts cannot be inserted as successful embeddin
     );
   });
 });
+
+function batchResponse(values: string[]) {
+  return new Response(
+    JSON.stringify({
+      data: values.map((value, index) => ({
+        embedding: [Number(value), 1],
+        index,
+        object: "embedding",
+      })),
+      model: "unit-embedding",
+      object: "list",
+      usage: { prompt_tokens: values.length, total_tokens: values.length },
+    }),
+    { headers: { "content-type": "application/json" }, status: 200 }
+  );
+}
+
+test("live embeddings keep provider batches at ten inputs and preserve all 23 results in order", async () => {
+  await inLiveMode(async () => {
+    const requests: string[][] = [];
+    mock.method(
+      globalThis,
+      "fetch",
+      async (_input: string | URL | Request, init?: RequestInit) => {
+        const body: { input: string[] } = JSON.parse(String(init?.body));
+        assert.ok(body.input.length <= 10);
+        requests.push(body.input);
+        return batchResponse(body.input);
+      }
+    );
+    const texts = Array.from({ length: 23 }, (_, index) => String(index));
+    const embeddings = await embedTexts(texts);
+    assert.deepEqual(
+      requests.map((values) => values.length),
+      [10, 10, 3]
+    );
+    assert.deepEqual(requests.flat(), texts);
+    assert.deepEqual(
+      embeddings,
+      texts.map((value) => [Number(value), 1])
+    );
+  });
+});
+
+test("a later embedding batch failure rejects the full operation and never requests the remaining batch", async () => {
+  await inLiveMode(async () => {
+    const requests: string[][] = [];
+    mock.method(
+      globalThis,
+      "fetch",
+      async (_input: string | URL | Request, init?: RequestInit) => {
+        const body: { input: string[] } = JSON.parse(String(init?.body));
+        requests.push(body.input);
+        if (requests.length === 1) {
+          return batchResponse(body.input);
+        }
+        return new Response(
+          JSON.stringify({
+            error: {
+              message: "Sensitive provider debug: second-batch-secret",
+              type: "invalid_request_error",
+            },
+          }),
+          { headers: { "content-type": "application/json" }, status: 401 }
+        );
+      }
+    );
+    await assert.rejects(
+      embedTexts(Array.from({ length: 23 }, (_, index) => String(index))),
+      (error: unknown) => {
+        assert.ok(error instanceof ResearchError);
+        assert.equal(error.status, 502);
+        assert.doesNotMatch(error.message, /second-batch-secret|Sensitive/);
+        return true;
+      }
+    );
+    assert.deepEqual(
+      requests.map((values) => values.length),
+      [10, 10]
+    );
+  });
+});
+
+test("empty embedding input returns no vectors without credentials or network requests", async () => {
+  await inLiveMode(async () => {
+    delete process.env.MODEL_API_KEY;
+    delete process.env.EMBEDDING_API_KEY;
+    const fetchMock = mock.method(globalThis, "fetch", async () => {
+      throw new Error("Empty input must not make an HTTP request");
+    });
+    assert.deepEqual(await embedTexts([]), []);
+    assert.equal(fetchMock.mock.callCount(), 0);
+  });
+});
