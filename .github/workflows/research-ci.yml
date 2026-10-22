@@ -1,0 +1,62 @@
+name: RepoPilot checks
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: repopilot-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      RESEARCH_MODE: demo
+      AUTH_SECRET: ci-only-not-a-production-secret-repopilot
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: pnpm
+      - name: Install locked dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Set up local database
+        run: pnpm run setup:local
+      - name: Check formatting and code conventions
+        run: pnpm check
+      - name: Check TypeScript
+        run: pnpm typecheck
+      - name: Test core logic and provider contracts
+        run: pnpm test:unit
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Test API, retrieval and fixed evaluation cases
+        run: pnpm test:research
+      - name: Test user flows in browser
+        run: pnpm test:e2e:research
+      - name: Test service restart persistence and local database ownership
+        run: pnpm test:persistence
+      - name: Build production application
+        run: pnpm build
+      - name: Preserve test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: repopilot-verification
+          path: |
+            test-results/
+            playwright-report/research/
+          if-no-files-found: ignore
+          retention-days: 7
