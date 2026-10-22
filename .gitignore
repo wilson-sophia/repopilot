@@ -3,6 +3,7 @@ node_modules
 .pnp.js
 coverage
 .next/
+.next-*/
 out/
 build
 .DS_Store
@@ -25,3 +26,7 @@ yarn-error.log*
 /playwright/*
 next-env.d.ts
 tsconfig.tsbuildinfo
+.data/
+work/
+*.log
+docs/verification-artifacts/

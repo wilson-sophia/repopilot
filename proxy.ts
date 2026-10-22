@@ -22,6 +22,12 @@ export async function proxy(request: NextRequest) {
   const base = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
 
   if (!token) {
+    if (pathname.startsWith("/api/research")) {
+      return NextResponse.json(
+        { error: "请先打开工作台建立会话" },
+        { status: 401 }
+      );
+    }
     const redirectUrl = encodeURIComponent(new URL(request.url).pathname);
 
     return NextResponse.redirect(

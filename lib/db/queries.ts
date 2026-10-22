@@ -12,12 +12,11 @@ import {
   lt,
   type SQL,
 } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
 import type { ArtifactKind } from "@/components/chat/artifact";
 import type { VisibilityType } from "@/components/chat/visibility-selector";
 import { ChatbotError } from "../errors";
 import { generateUUID } from "../utils";
+import { database as db } from "./connection";
 import {
   type Chat,
   chat,
@@ -32,9 +31,6 @@ import {
   vote,
 } from "./schema";
 import { generateHashedPassword } from "./utils";
-
-const client = postgres(process.env.POSTGRES_URL ?? "");
-const db = drizzle(client);
 
 export async function getUser(email: string): Promise<User[]> {
   try {
@@ -61,10 +57,7 @@ export async function createGuestUser() {
   const password = generateHashedPassword(generateUUID());
 
   try {
-    return await db.insert(user).values({ email, password }).returning({
-      email: user.email,
-      id: user.id,
-    });
+    return await db.insert(user).values({ email, password }).returning();
   } catch (error) {
     throw new ChatbotError("bad_request:database", { cause: error });
   }
