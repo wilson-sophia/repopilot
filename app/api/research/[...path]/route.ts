@@ -8,6 +8,7 @@ import {
   researchMode,
   safeError,
 } from "@/lib/research/config";
+import { parseDocument } from "@/lib/research/document-parser";
 import {
   cancelRun,
   createProject,
@@ -19,6 +20,7 @@ import {
   listProjects,
   projectDetail,
   removeDocument,
+  updateProject,
 } from "@/lib/research/store";
 import type { ResearchEvent } from "@/lib/research/types";
 import { identifier, projectInput, runInput } from "@/lib/research/validation";
@@ -130,6 +132,15 @@ async function handler(request: Request, context: Context) {
       }
     }
     if (resource === "projects" && id) {
+      if (!child && request.method === "PATCH") {
+        return json({
+          project: await updateProject(
+            ownerId,
+            id,
+            projectInput.parse(await bodyJSON(request))
+          ),
+        });
+      }
       if (!child && request.method === "GET") {
         return json(await projectDetail(ownerId, id));
       }
@@ -152,23 +163,18 @@ async function handler(request: Request, context: Context) {
         }
         const file = form.get("file");
         if (!(file instanceof File)) {
-          throw new ResearchError("请选择一个 Markdown 或 TXT 文件");
+          throw new ResearchError("请选择一个 Markdown、TXT、PDF 或 DOCX 文件");
         }
-        if (!/\.(md|markdown|txt)$/i.test(file.name)) {
-          throw new ResearchError("仅支持 Markdown / TXT 文件", 415);
+        if (!/\.(md|markdown|txt|pdf|docx)$/i.test(file.name)) {
+          throw new ResearchError(
+            "仅支持 Markdown / TXT / PDF / DOCX 文件",
+            415
+          );
         }
         if (file.size > limits.maxFileBytes) {
           throw new ResearchError("单份资料不能超过 1 MB", 413);
         }
-        let content: string;
-        try {
-          content = new TextDecoder("utf-8", { fatal: true }).decode(
-            await file.arrayBuffer()
-          );
-        } catch (error) {
-          // biome-ignore lint/style/useErrorCause: ResearchError accepts ErrorOptions as its third argument.
-          throw new ResearchError("文件应为 UTF-8 文本", 400, { cause: error });
-        }
+        const content = await parseDocument(file);
         const name = file.name
           // biome-ignore lint/suspicious/noControlCharactersInRegex: Scrub untrusted filenames, including NUL and ASCII controls.
           .replace(/[/\\\u0000-\u001f]/g, "_")
@@ -285,4 +291,4 @@ async function handler(request: Request, context: Context) {
   }
 }
 
-export { handler as GET, handler as POST, handler as DELETE };
+export { handler as GET, handler as POST, handler as DELETE, handler as PATCH };

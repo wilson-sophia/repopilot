@@ -104,3 +104,7 @@ pnpm test:production
 - [验证记录](docs/VERIFICATION.md)：实测命令、结果和未验证项。
 
 Vercel Chatbot 提供工程、鉴权和基础 UI；RepoPilot 新增项目调研领域、资料检索工具、执行过程与来源展示、报告管理和相应验证。已完成的本地验证与外部服务验证边界见 [docs/VERIFICATION.md](docs/VERIFICATION.md)。
+
+## 2026-11-13 功能补充
+
+工作台支持编辑项目名称、描述与仓库。资料上传支持 Markdown、TXT、PDF（文字层）、DOCX，仍限制单文件 1 MiB。启动器启动时会自动重新执行中断的运行任务，保留任务 ID；部分报告会重新生成，并非模型 token 级续接。当前恢复机制用于单实例部署。最新验证范围见 docs/VERIFICATION.md。

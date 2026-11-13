@@ -355,3 +355,29 @@ test("deleted documents disappear from both library and future retrieval", async
     run.sources.some((source) => source.documentId === document.id)
   ).toBeFalsy();
 });
+
+test("project edits persist and reject invalid repositories", async ({
+  request,
+}) => {
+  const project = await createProject(request);
+  const response = await request.patch(`/api/research/projects/${project.id}`, {
+    data: {
+      description: "新需求",
+      name: "修改后的项目",
+      repository: "https://github.com/vercel/next.js",
+    },
+  });
+  expect(response.ok()).toBeTruthy();
+  const detail = await (
+    await request.get(`/api/research/projects/${project.id}`)
+  ).json();
+  expect(detail.project.name).toBe("修改后的项目");
+  expect(detail.project.repository).toBe("vercel/next.js");
+  expect(
+    (
+      await request.patch(`/api/research/projects/${project.id}`, {
+        data: { name: "bad", repository: "https://evil.example/x" },
+      })
+    ).status()
+  ).toBe(400);
+});

@@ -32,7 +32,7 @@ function appendReferences(report: string, sources: ResearchSource[]) {
   return `${report}\n\n## 来源索引\n${sources.map((source) => `- [${source.id}] ${source.title}${source.url ? ` — ${source.url}` : "（项目内资料）"}；检索时间：${source.retrievedAt}`).join("\n")}`;
 }
 
-/** Request-bound execution: durable evidence, explicit cancellation, no claim of restart-resume. */
+/** Persisted execution; interrupted runs are replayed by the launcher recovery process. */
 export async function executeResearch(
   ownerId: string,
   initial: ResearchRun,
@@ -51,7 +51,10 @@ export async function executeResearch(
   let lastSave = 0;
   const persist = async () => {
     run.durationMs = Date.now() - started;
-    await saveRun(ownerId, run);
+    const saved = await saveRun(ownerId, run);
+    if (saved.status === "cancelled") {
+      controller.abort();
+    }
     lastSave = Date.now();
   };
   const addSource = async (source: ResearchSource) => {

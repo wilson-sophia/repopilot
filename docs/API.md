@@ -51,3 +51,9 @@ data: {"type":"source","source":{"id":"...","title":"...","kind":"document","exc
 - `error`：错误消息及可用的运行记录。
 
 前端解析时需要处理跨网络分块的半条 SSE 消息，不能假设一次 `read()` 就是一条事件。取消前端读取与取消服务端执行需要分别处理。准确类型定义见 `lib/research/types.ts`。
+
+## 2026-11-13 更新
+
+- `PATCH /projects/:id`：提交与创建相同的名称、描述、仓库字段，校验所有权并更新项目。
+- 文件导入支持 Markdown / TXT / PDF / DOCX；PDF 需包含文字层，不支持扫描件 OCR。
+- 使用启动器重启后，未结束任务沿用原 ID 自动重新执行；历史终态任务保持不变。

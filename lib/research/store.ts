@@ -349,3 +349,17 @@ export async function cancelRun(
     ),
   });
 }
+
+export async function updateProject(
+  ownerId: string,
+  id: string,
+  input: { name: string; description: string; repository: string }
+) {
+  await requireProject(ownerId, id);
+  const [project] = await db
+    .update(projects)
+    .set({ ...input, updatedAt: new Date().toISOString() })
+    .where(and(eq(projects.id, id), eq(projects.ownerId, ownerId)))
+    .returning();
+  return project;
+}

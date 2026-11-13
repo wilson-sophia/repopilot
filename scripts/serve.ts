@@ -103,9 +103,23 @@ async function serve() {
         stdio: "inherit",
       }
     );
+    const recovery = spawn(
+      process.execPath,
+      ["--import", "tsx", "scripts/recover-research.ts"],
+      {
+        env: {
+          ...process.env,
+          POSTGRES_URL: localURL,
+          RESEARCH_LOCAL_DB: localDatabase ? "1" : "0",
+        },
+        stdio: "inherit",
+      }
+    );
+    recovery.on("error", (error) => console.error("恢复进程启动失败", error));
     let stopRequested = false;
     const stop = () => {
       stopRequested = true;
+      recovery.kill("SIGTERM");
       child.kill("SIGTERM");
     };
     process.once("SIGINT", stop);
@@ -115,6 +129,7 @@ async function serve() {
       process.exitCode = 1;
     });
     child.once("exit", async (code, signal) => {
+      recovery.kill("SIGTERM");
       await cleanup();
       process.exitCode =
         stopRequested && (signal === "SIGTERM" || code === 143)

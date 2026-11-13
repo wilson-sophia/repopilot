@@ -23,6 +23,7 @@ export default defineConfig({
   use: {
     ...devices["Desktop Chrome"],
     baseURL,
+    channel: process.env.RESEARCH_BROWSER_CHANNEL,
     screenshot: "only-on-failure",
     trace: "retain-on-failure",
     video: "off",

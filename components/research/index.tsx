@@ -51,6 +51,7 @@ const suggestions = [
 export function ResearchWorkspace() {
   const workspace = useResearchWorkspace();
   const { resolvedTheme, setTheme } = useTheme();
+  const [editProjectOpen, setEditProjectOpen] = useState(false);
   const [newProjectOpen, setNewProjectOpen] = useState(false);
   const [defaultRepository, setDefaultRepository] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -369,6 +370,14 @@ export function ResearchWorkspace() {
                       Research project
                     </div>
                     <h1>{project.name}</h1>
+                    <button
+                      className="research-button"
+                      disabled={hasRunning}
+                      onClick={() => setEditProjectOpen(true)}
+                      type="button"
+                    >
+                      编辑项目
+                    </button>
                     {Boolean(project.description) && (
                       <p className="research-project-description">
                         {project.description}
@@ -664,6 +673,14 @@ export function ResearchWorkspace() {
           )}
         </main>
       </div>
+      {Boolean(project) && project && (
+        <NewProjectDialog
+          initialProject={project}
+          onCreate={workspace.updateProject}
+          onOpenChange={setEditProjectOpen}
+          open={editProjectOpen}
+        />
+      )}
       <NewProjectDialog
         defaultRepository={defaultRepository}
         onCreate={workspace.createProject}

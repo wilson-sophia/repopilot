@@ -328,8 +328,8 @@ export function useResearchWorkspace() {
       }
       setError(null);
       setUploadMessage("");
-      if (!/\.(md|markdown|txt)$/i.test(file.name)) {
-        setUploadMessage("请选择 Markdown（.md）或 TXT 文档。");
+      if (!/\.(md|markdown|txt|pdf|docx)$/i.test(file.name)) {
+        setUploadMessage("请选择 Markdown、TXT、PDF 或 DOCX 文档。");
         return;
       }
       if (config && file.size > config.limits.maxFileBytes) {
@@ -390,6 +390,27 @@ export function useResearchWorkspace() {
     setError,
     startRun,
     streaming,
+    updateProject: async (
+      values: Pick<ResearchProject, "name" | "description" | "repository">
+    ) => {
+      if (!project) {
+        return;
+      }
+      const result = await researchRequest<{ project: ResearchProject }>(
+        `/projects/${project.id}`,
+        {
+          body: JSON.stringify(values),
+          headers: { "Content-Type": "application/json" },
+          method: "PATCH",
+        }
+      );
+      setProject(result.project);
+      setProjects((previous) =>
+        previous.map((entry) =>
+          entry.id === result.project.id ? result.project : entry
+        )
+      );
+    },
     uploadDocument,
     uploading,
     uploadMessage,

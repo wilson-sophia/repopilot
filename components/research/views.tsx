@@ -331,7 +331,7 @@ export const DocumentsPanel = memo(function DocumentsPanelContent({
         ))}
       </div>
       <input
-        accept=".md,.markdown,.txt,text/plain,text/markdown"
+        accept=".md,.markdown,.txt,.pdf,.docx,text/plain,text/markdown"
         aria-label="上传文档"
         className="sr-only"
         disabled={disabled || uploading}
@@ -373,7 +373,7 @@ export const DocumentsPanel = memo(function DocumentsPanelContent({
           <Upload size={17} />
         )}
         <span>{uploading ? "正在解析并建立索引…" : "点击或拖入项目文档"}</span>
-        <small>Markdown / TXT</small>
+        <small>Markdown / TXT / PDF / DOCX</small>
       </button>
       {Boolean(message) && (
         <p className="research-upload-status" role="status">
@@ -475,6 +475,7 @@ export function SourceDialog({ source, onOpenChange }: SourceDialogProps) {
 
 export interface NewProjectDialogProps {
   defaultRepository?: string;
+  initialProject?: ResearchProject;
   onCreate: (
     values: Pick<ResearchProject, "name" | "description" | "repository">
   ) => Promise<unknown>;
@@ -485,6 +486,7 @@ export interface NewProjectDialogProps {
 export function NewProjectDialog({
   open,
   defaultRepository = "",
+  initialProject,
   onOpenChange,
   onCreate,
 }: NewProjectDialogProps) {
@@ -495,12 +497,15 @@ export function NewProjectDialog({
   const [error, setError] = useState("");
   useEffect(() => {
     if (open) {
-      setName(defaultRepository ? "Vercel Chatbot 技术调研" : "");
-      setRepository(defaultRepository);
-      setDescription("");
+      setName(
+        initialProject?.name ??
+          (defaultRepository ? "Vercel Chatbot 技术调研" : "")
+      );
+      setRepository(initialProject?.repository ?? defaultRepository);
+      setDescription(initialProject?.description ?? "");
       setError("");
     }
-  }, [open, defaultRepository]);
+  }, [open, defaultRepository, initialProject]);
   return (
     <Dialog
       onOpenChange={(nextOpen) => {
@@ -512,7 +517,9 @@ export function NewProjectDialog({
     >
       <DialogContent className="research-dialog">
         <DialogHeader>
-          <DialogTitle>新建调研项目</DialogTitle>
+          <DialogTitle>
+            {initialProject ? "编辑项目" : "新建调研项目"}
+          </DialogTitle>
           <DialogDescription>
             关联一个开源仓库，导入你的需求文档，开始有据可查的技术调研。
           </DialogDescription>
@@ -601,7 +608,11 @@ export function NewProjectDialog({
               {Boolean(submitting) && (
                 <LoaderCircle className="research-spin" />
               )}
-              {submitting ? "正在创建…" : "创建项目"}
+              {submitting
+                ? "正在保存…"
+                : initialProject
+                  ? "保存修改"
+                  : "创建项目"}
             </button>
           </div>
         </form>

@@ -66,11 +66,6 @@ export async function setupDatabase() {
         await database.execute(sql.raw(statement));
       }
     }
-    // A process restart cannot resume a request-bound agent. Preserve evidence
-    // and make the interrupted status explicit rather than pretending it ran.
-    await database.execute(
-      sql`UPDATE research_run SET status='failed', error='服务重启，执行已中断，请重新发起', finished_at=now() WHERE status='running'`
-    );
     console.log(
       `Database ready: ${process.env.POSTGRES_URL ? "external PostgreSQL" : "local PGlite PostgreSQL + pgvector"}`
     );

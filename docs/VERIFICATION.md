@@ -94,3 +94,21 @@ RESEARCH_MODE=demo RESEARCH_FIXTURES=1 PGLITE_DATA_DIR=.data/evaluation pnpm dev
 随后在另一个终端执行 `pnpm eval:research`。固定案例评测会保存 `test-results/research-evaluation.json`。这是固定工具数据下的工程与检索评估，不是真实模型推理能力评估。
 
 Playwright 配置输出 `test-results/research-results.json` 与 `playwright-report/research/`。CI 使用 `.github/workflows/research-ci.yml`，按依赖安装、数据库准备、代码规范、类型检查、单元测试、API 测试、浏览器测试、重启持久性、生产构建和生产 HTTP 冒烟的顺序执行。`pnpm typecheck` 内含 Next.js 类型生成，保证新克隆的 CI 不依赖本地开发产生的 `next-env.d.ts` / 路由类型。保留的上游工作流已调整为手动触发。正式推送的远程结果已单独确认，见上方 Actions 链接与测试提交记录。
+
+## 2026-11-13 增量验证
+
+本轮新增项目编辑 PATCH 接口与工作台表单；资料导入增加 PDF 文本层与 DOCX 原文提取；启动器自动恢复数据库中仍为 running 的任务，沿用原任务 ID，清空部分生成内容后重新执行。取消状态通过数据库检查同步到恢复进程。
+
+- TypeScript 检查通过。
+- 原有及文档解析单元测试 34/34 通过；新增独立进程恢复测试 1/1 通过（关闭数据库、启动恢复进程、重新打开并核对同一任务完成）。
+- API 回归 17/17 通过，包含项目编辑持久化、非法仓库地址拒绝。
+- 第一轮完整 Playwright 入口：17 个 API / 固定评测入口通过，6 个浏览器用例因本机缺少 Chromium 无法启动，不能记为浏览器通过。
+
+边界：PDF 不含 OCR；仍保留 1 MiB 文件上限、256 片段上限，并限制提取文本不超过 50 万字符。重启恢复是重新执行调研，不是精确续接模型 token；可能重复产生供应商调用费用。当前启动器恢复适用于单实例，不提供分布式任务租约。未接入真实模型供应商。
+
+### 本轮最终补充结果
+
+- 最新完整单元测试：35/35 通过，包含新进程任务恢复。
+- 生产构建 `pnpm build` 通过；仍有既有 metadataBase localhost 提示。
+- 使用本机 Edge（PowerShell 设置 `$env:RESEARCH_BROWSER_CHANNEL="msedge"`）运行 6 个浏览器流程，6/6 通过。默认仍使用 Playwright Chromium；此前缺少 Chromium 的失败为环境缺失，已通过 Edge 完成浏览器回归。
+- 本轮未重跑生产 HTTP 冒烟；未完成真实模型质量验证、真实 TLS 或分布式部署验证。
