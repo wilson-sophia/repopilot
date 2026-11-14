@@ -1,43 +1,71 @@
-import { ArrowLeftIcon } from "lucide-react";
+import {
+  ArrowLeft,
+  BookOpen,
+  FileSearch,
+  History,
+  Layers3,
+} from "lucide-react";
 import Link from "next/link";
-import { SparklesIcon, VercelIcon } from "@/components/chat/icons";
-import { Preview } from "@/components/chat/preview";
-
+import "./auth.css";
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-dvh w-screen bg-sidebar">
-      <div className="flex w-full flex-col bg-background p-8 xl:w-[600px] xl:shrink-0 xl:rounded-r-2xl xl:border-r xl:border-border/40 md:p-16">
-        <Link
-          className="flex w-fit items-center gap-1.5 text-[13px] text-muted-foreground transition-colors hover:text-foreground"
-          href="/"
-        >
-          <ArrowLeftIcon className="size-3.5" />
-          Back
+    <main className="auth-shell">
+      <section className="auth-intro">
+        <Link className="auth-brand" href="/research">
+          <Layers3 /> RepoPilot <span>开源项目调研工作台</span>
         </Link>
-        <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center gap-10">
-          <div className="flex flex-col gap-2">
-            <div className="mb-2 flex size-9 items-center justify-center rounded-lg bg-muted/60 text-muted-foreground ring-1 ring-border/50">
-              <SparklesIcon size={14} />
-            </div>
-            {children}
+        <div className="auth-story">
+          <p className="auth-kicker">从资料到判断，每一步都有依据</p>
+          <h2>
+            把开源选型的线索，
+            <br />
+            整理成有据可查的结论。
+          </h2>
+          <p>
+            围绕真实需求，检索项目资料、核对仓库动态，留下一份可以回查来源的调研记录。
+          </p>
+          <div className="auth-features">
+            <article>
+              <FileSearch />
+              <div>
+                <h3>围绕项目展开调研</h3>
+                <p>将需求、仓库和问题集中到同一个空间。</p>
+              </div>
+            </article>
+            <article>
+              <BookOpen />
+              <div>
+                <h3>让结论关联原文</h3>
+                <p>导入资料，查看引用，核对每一条证据。</p>
+              </div>
+            </article>
+            <article>
+              <History />
+              <div>
+                <h3>保留每一次探索</h3>
+                <p>回看历史记录，导出报告，继续深入分析。</p>
+              </div>
+            </article>
           </div>
         </div>
-      </div>
-
-      <div className="hidden flex-1 flex-col overflow-hidden pl-12 xl:flex">
-        <div className="flex items-center gap-1.5 pt-8 text-[13px] text-muted-foreground/50">
-          Powered by
-          <VercelIcon size={14} />
-          <span className="font-medium text-muted-foreground">AI Gateway</span>
+        <p className="auth-footnote">有来源的分析，让技术决策更清晰。</p>
+      </section>
+      <section className="auth-entry">
+        <Link className="auth-back" href="/research">
+          <ArrowLeft size={16} /> 返回工作台
+        </Link>
+        <div className="auth-card">
+          <div className="auth-mark">
+            <Layers3 />
+          </div>
+          {children}
+          <p className="auth-privacy">账号用于保存和访问你的个人调研空间。</p>
         </div>
-        <div className="flex-1 pt-4">
-          <Preview />
-        </div>
-      </div>
-    </div>
+      </section>
+    </main>
   );
 }

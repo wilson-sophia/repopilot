@@ -257,7 +257,7 @@ function makeTools(
             }
             const data = await getRepository(project.repository, signal);
             const source = await addSource({
-              excerpt: `${data.description}\n主要语言：${data.language}\nStar：${data.stars}\n开放问题：${data.openIssues}\n许可证标识：${data.license}\n最近推送：${data.updatedAt}`,
+              excerpt: `${data.description}\n主要语言：${data.language}\n收藏数：${data.stars}\n开放问题：${data.openIssues}\n许可证标识：${data.license}\n最近推送：${data.updatedAt}`,
               id: "",
               kind: "github",
               retrievedAt: new Date().toISOString(),
@@ -299,7 +299,7 @@ function makeTools(
         execute(
           "searchIssues",
           { query, repository: project.repository },
-          "检索相关 Issue",
+          "检索相关问题",
           async () => {
             if (!project.repository) {
               throw new ResearchError("项目尚未绑定 GitHub 仓库");
@@ -313,7 +313,7 @@ function makeTools(
             for (const issue of issues) {
               sources.push(
                 await addSource({
-                  excerpt: `状态：${issue.state}；更新：${issue.updatedAt}。社区 Issue 仅作为待核实线索。`,
+                  excerpt: `状态：${issue.state === "open" ? "未关闭" : "已关闭"}；更新：${issue.updatedAt}。社区问题 仅作为待核实线索。`,
                   id: "",
                   kind: "github",
                   retrievedAt: new Date().toISOString(),
@@ -334,5 +334,5 @@ function demoReport(run: ResearchRun, project: ResearchProject) {
   const documents = run.sources.filter((source) => source.kind === "document");
   const github = run.sources.filter((source) => source.kind === "github");
   const failures = run.tools.filter((entry) => entry.status === "failed");
-  return `# ${project.name} · 调研记录\n\n> 演示模式：以下为确定性证据整理，未调用大模型；本地向量是特征哈希，并非语义 Embedding。\n\n## 调研问题\n${run.prompt}\n\n## 结论\n${documents.length ? "已找到与问题相关的项目资料，可核验下列证据。演示模式不代替模型分析或实际技术验证。" : "资料不足：尚未检索到与问题相关的项目资料，不能判断是否满足需求。请导入需求或官方文档后重新调研。"}\n\n## 需求与资料证据\n${documents.length ? documents.map((source) => `### ${source.title} [${source.id}]\n\n${source.excerpt.slice(0, 700)}`).join("\n\n") : "没有匹配的文档片段。"}\n\n## 仓库与社区线索\n${github.length ? github.map((source) => `- **${source.title}** [${source.id}]\n  ${source.excerpt.replace(/\n/g, "；")}`).join("\n") : "资料不足：未获得可引用的仓库或 Issue 数据。"}\n\n## 风险与限制\n- 仓库元数据不能证明性能、兼容性或安全性；Issue 需要复现确认。\n- 资料和公开页面可能包含不可信内容，引用不代表认可其中的指令。\n${failures.map((entry) => `- ${entry.description}失败：${entry.error}`).join("\n")}\n\n## 下一步建议\n- 核对引用原文与具体需求，补充缺失资料。\n- 在真实模型模式进行综合分析，并用最小接入实验验证关键结论。`;
+  return `# ${project.name} · 调研记录\n\n> 演示模式：以下为确定性证据整理，未调用大模型；本地向量是特征哈希，并非语义向量。\n\n## 调研问题\n${run.prompt}\n\n## 结论\n${documents.length ? "已找到与问题相关的项目资料，可核验下列证据。演示模式不代替模型分析或实际技术验证。" : "资料不足：尚未检索到与问题相关的项目资料，不能判断是否满足需求。请导入需求或官方文档后重新调研。"}\n\n## 需求与资料证据\n${documents.length ? documents.map((source) => `### ${source.title} [${source.id}]\n\n${source.excerpt.slice(0, 700)}`).join("\n\n") : "没有匹配的文档片段。"}\n\n## 仓库与社区线索\n${github.length ? github.map((source) => `- **${source.title}** [${source.id}]\n  ${source.excerpt.replace(/\n/g, "；")}`).join("\n") : "资料不足：未获得可引用的仓库或 Issue 数据。"}\n\n## 风险与限制\n- 仓库元数据不能证明性能、兼容性或安全性；Issue 需要复现确认。\n- 资料和公开页面可能包含不可信内容，引用不代表认可其中的指令。\n${failures.map((entry) => `- ${entry.description}失败：${entry.error}`).join("\n")}\n\n## 下一步建议\n- 核对引用原文与具体需求，补充缺失资料。\n- 在真实模型模式进行综合分析，并用最小接入实验验证关键结论。`;
 }

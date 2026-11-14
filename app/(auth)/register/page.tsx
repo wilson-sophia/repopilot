@@ -24,16 +24,16 @@ export default function Page() {
   // biome-ignore lint/correctness/useExhaustiveDependencies: router and updateSession are stable refs
   useEffect(() => {
     if (state.status === "user_exists") {
-      toast({ description: "Account already exists!", type: "error" });
+      toast({ description: "该邮箱已注册，请直接登录。", type: "error" });
     } else if (state.status === "failed") {
-      toast({ description: "Failed to create account!", type: "error" });
+      toast({ description: "注册失败，请稍后重试。", type: "error" });
     } else if (state.status === "invalid_data") {
       toast({
-        description: "Failed validating your submission!",
+        description: "提交内容有误，请检查邮箱和密码。",
         type: "error",
       });
     } else if (state.status === "success") {
-      toast({ description: "Account created!", type: "success" });
+      toast({ description: "账号创建成功！", type: "success" });
       setIsSuccessful(true);
       updateSession();
       router.refresh();
@@ -47,17 +47,21 @@ export default function Page() {
 
   return (
     <>
-      <h1 className="text-2xl font-semibold tracking-tight">Create account</h1>
-      <p className="text-sm text-muted-foreground">Get started for free</p>
+      <h1 className="text-2xl font-semibold tracking-tight">
+        创建你的调研空间
+      </h1>
+      <p className="text-sm text-muted-foreground">
+        用一个账号，集中保存项目资料、来源和调研报告。
+      </p>
       <AuthForm action={handleSubmit} defaultEmail={email}>
-        <SubmitButton isSuccessful={isSuccessful}>Sign up</SubmitButton>
+        <SubmitButton isSuccessful={isSuccessful}>注册账号</SubmitButton>
         <p className="text-center text-[13px] text-muted-foreground">
-          {"Have an account? "}
+          {"已有账号？"}
           <Link
             className="text-foreground underline-offset-4 hover:underline"
             href="/login"
           >
-            Sign in
+            登录
           </Link>
         </p>
       </AuthForm>

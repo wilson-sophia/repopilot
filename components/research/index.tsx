@@ -11,6 +11,7 @@ import {
   CheckCheck,
   ChevronRight,
   CircleAlert,
+  CircleHelp,
   FileText,
   FolderOpen,
   Github,
@@ -29,6 +30,11 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { ResearchSource } from "@/lib/research/types";
 import { useResearchWorkspace } from "./use-research-workspace";
 import {
@@ -43,7 +49,7 @@ import {
 
 const suggestions = [
   "结合项目文档，梳理主要能力、使用方式和接入注意事项。",
-  "分析这个仓库的维护情况与相关 Issue，给出选型建议并附来源。",
+  "分析这个仓库的维护情况与相关问题，给出选型建议并附来源。",
   "根据我的项目需求，评估这个开源方案的适用性与待验证风险。",
 ];
 
@@ -175,7 +181,7 @@ export function ResearchWorkspace() {
             </span>
             <span>
               <strong>RepoPilot</strong>
-              <small>Research, with evidence</small>
+              <small>开源项目调研工作台</small>
             </span>
           </a>
           <button
@@ -192,7 +198,7 @@ export function ResearchWorkspace() {
             className="research-project-navigation"
           >
             <div className="research-sidebar-heading">
-              <span>我的项目</span>
+              <span>调研项目</span>
               <span>{projects.length}</span>
             </div>
             {projects.map((entry) => (
@@ -227,7 +233,7 @@ export function ResearchWorkspace() {
                 都有可追溯的依据。
               </p>
               <p className="mt-3">
-                Built on{" "}
+                基于开源项目{" "}
                 <a
                   href="https://github.com/vercel/chatbot"
                   rel="noopener noreferrer"
@@ -237,15 +243,31 @@ export function ResearchWorkspace() {
                 </a>
               </p>
             </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  aria-label="如何使用调研工作台"
+                  className="research-help-button"
+                  type="button"
+                >
+                  <CircleHelp size={16} /> 使用帮助
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-64 leading-7" side="top">
+                <div>
+                  <strong>三步开始调研</strong>
+                  <ol>
+                    <li>1. 新建项目，关联开源仓库</li>
+                    <li>2. 上传需求或项目资料</li>
+                    <li>3. 提出问题，核对报告引用</li>
+                  </ol>
+                </div>
+              </TooltipContent>
+            </Tooltip>
             <div className="research-user">
-              <span className="research-avatar">
-                {config?.user.email.startsWith("guest-")
-                  ? "访"
-                  : (config?.user.email.slice(0, 1).toUpperCase() ?? "R")}
-              </span>
               <span>
                 {config?.user.email.startsWith("guest-")
-                  ? "访客工作空间"
+                  ? "访客模式"
                   : (config?.user.email ?? "个人工作空间")}
               </span>
               {config?.user.email.startsWith("guest-") && (
@@ -324,7 +346,7 @@ export function ResearchWorkspace() {
               <CircleAlert size={13} />
               <span>
                 当前为演示模式：使用确定性调研流程，不调用大模型；配置模型后可使用真实
-                Agent 推理。
+                智能分析。
               </span>
             </div>
           )}
@@ -365,19 +387,17 @@ export function ResearchWorkspace() {
                   className="research-conversation"
                 >
                   <div className="research-project-header">
-                    <div className="research-eyebrow">
-                      <FolderOpen size={13} />
-                      Research project
+                    <div className="research-project-title-row">
+                      <h1>{project.name}</h1>
+                      <button
+                        className="research-button"
+                        disabled={hasRunning}
+                        onClick={() => setEditProjectOpen(true)}
+                        type="button"
+                      >
+                        编辑项目
+                      </button>
                     </div>
-                    <h1>{project.name}</h1>
-                    <button
-                      className="research-button"
-                      disabled={hasRunning}
-                      onClick={() => setEditProjectOpen(true)}
-                      type="button"
-                    >
-                      编辑项目
-                    </button>
                     {Boolean(project.description) && (
                       <p className="research-project-description">
                         {project.description}
@@ -626,7 +646,7 @@ export function ResearchWorkspace() {
                 建立在证据上。
               </h1>
               <p className="research-empty-description">
-                连接开源仓库与项目文档。让 Agent 帮你检索资料、分析
+                连接开源仓库与项目文档。让调研助手帮你检索资料、分析
                 Issue、核验来源，把零散信息整理为一份清晰的技术调研。
               </p>
               <div className="research-start-actions">
@@ -654,9 +674,7 @@ export function ResearchWorkspace() {
                 <div className="research-capability">
                   <Github />
                   <h2>理解真实项目</h2>
-                  <p>
-                    查询公开仓库和相关 Issue，了解功能、维护状态与使用边界。
-                  </p>
+                  <p>查询公开仓库和相关问题，了解功能、维护状态与使用边界。</p>
                 </div>
                 <div className="research-capability">
                   <BookOpen />
