@@ -61,3 +61,7 @@ Base URL 填到 `/compatible-mode/v1`，项目会自动补充 `/chat/completions
 - [Chat 兼容接口与地域地址](https://help.aliyun.com/zh/model-studio/qwen-api-via-openai-chat-completions)
 - [Embedding 兼容接口、维度与每批条数](https://help.aliyun.com/zh/model-studio/embedding-interfaces-compatible-with-openai)
 - [普通按量 Key 与专用计划 Key 的区别](https://help.aliyun.com/en/model-studio/get-api-key)
+
+## 本地代理
+
+如果浏览器可访问模型服务但 Node.js 连接超时，可在 `.env.local` 配置 `MODEL_PROXY_URL=http://127.0.0.1:实际代理端口`，然后重启服务。该设置仅用于聊天和向量接口，不改变工作台本地请求。端口以代理软件的 HTTP 或混合代理端口为准；部署时请勿沿用本机地址。

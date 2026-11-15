@@ -19,7 +19,7 @@ export interface RepositoryIssue {
   url: string;
 }
 
-async function githubJSON(
+export async function githubJSON(
   path: string,
   signal: AbortSignal
 ): Promise<Record<string, unknown>> {
@@ -51,7 +51,35 @@ async function githubJSON(
       });
     }
     if (response.ok) {
-      const data: unknown = await response.json();
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new ResearchError("GitHub 响应为空", 502);
+      }
+      const decoder = new TextDecoder();
+      let text = "";
+      let bytes = 0;
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          signal.throwIfAborted();
+          if (done) {
+            break;
+          }
+          bytes += value.byteLength;
+          if (bytes > 5_000_000) {
+            await reader.cancel();
+            throw new ResearchError(
+              "GitHub 响应超过5MB限制，请缩小仓库分析范围",
+              502
+            );
+          }
+          text += decoder.decode(value, { stream: true });
+        }
+        text += decoder.decode();
+      } finally {
+        reader.releaseLock();
+      }
+      const data: unknown = JSON.parse(text);
       if (!data || typeof data !== "object" || Array.isArray(data)) {
         throw new ResearchError("GitHub 返回了无法识别的数据", 502);
       }

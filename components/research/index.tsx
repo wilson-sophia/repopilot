@@ -49,7 +49,7 @@ import {
 
 const suggestions = [
   "结合项目文档，梳理主要能力、使用方式和接入注意事项。",
-  "分析这个仓库的维护情况与相关问题，给出选型建议并附来源。",
+  "分析这个仓库的关键实现，引用源码文件与行号，给出选型风险。",
   "根据我的项目需求，评估这个开源方案的适用性与待验证风险。",
 ];
 
@@ -62,6 +62,7 @@ export function ResearchWorkspace() {
   const [defaultRepository, setDefaultRepository] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [prompt, setPrompt] = useState("");
+  const [refreshEvidence, setRefreshEvidence] = useState(false);
   const [selectedSource, setSelectedSource] = useState<ResearchSource | null>(
     null
   );
@@ -155,13 +156,13 @@ export function ResearchWorkspace() {
     }
     const value = prompt;
     setPrompt("");
-    workspace.startRun(value).then((successful) => {
+    workspace.startRun(value, refreshEvidence).then((successful) => {
       if (!successful) {
         setPrompt((current) => current || value);
       }
     });
     requestAnimationFrame(() => composer.current?.focus());
-  }, [prompt, hasRunning, uploading, workspace.startRun]);
+  }, [prompt, hasRunning, uploading, workspace.startRun, refreshEvidence]);
 
   return (
     <div className="research-workspace" data-testid="research-workspace">
@@ -420,6 +421,7 @@ export function ResearchWorkspace() {
                       )}
                       <span>{documents.length} 份资料</span>
                       <span>{runs.length} 次调研</span>
+                      <span>后续提问延续已有调研记录</span>
                     </div>
                   </div>
 
@@ -504,6 +506,17 @@ export function ResearchWorkspace() {
                         value={prompt}
                       />
                       <div className="research-composer-controls">
+                        <label className="research-composer-context">
+                          <input
+                            checked={refreshEvidence}
+                            disabled={hasRunning}
+                            onChange={(event) =>
+                              setRefreshEvidence(event.target.checked)
+                            }
+                            type="checkbox"
+                          />
+                          重新查证（不复用历史证据）
+                        </label>
                         <span className="research-composer-context">
                           <FileText size={12} />
                           {
@@ -647,7 +660,7 @@ export function ResearchWorkspace() {
               </h1>
               <p className="research-empty-description">
                 连接开源仓库与项目文档。让调研助手帮你检索资料、分析
-                Issue、核验来源，把零散信息整理为一份清晰的技术调研。
+                源码、核验来源，把零散信息整理为一份清晰的技术调研。
               </p>
               <div className="research-start-actions">
                 <button

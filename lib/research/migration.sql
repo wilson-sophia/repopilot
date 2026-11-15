@@ -26,3 +26,8 @@ CREATE TABLE IF NOT EXISTS research_run (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS research_run_active_project_idx ON research_run(project_id) WHERE status = 'running';
 CREATE INDEX IF NOT EXISTS research_run_owner_idx ON research_run(owner_id, created_at);
+ALTER TABLE research_chunk ADD COLUMN IF NOT EXISTS search_text text NOT NULL DEFAULT '';
+ALTER TABLE research_chunk ADD COLUMN IF NOT EXISTS retrieval_metadata jsonb NOT NULL DEFAULT '{"keywords":[],"questions":[],"enrichment":"legacy"}';
+ALTER TABLE research_run ADD COLUMN IF NOT EXISTS checkpoint jsonb;
+ALTER TABLE research_run ADD COLUMN IF NOT EXISTS memory jsonb;
+ALTER TABLE research_run ADD COLUMN IF NOT EXISTS memory_scope text NOT NULL DEFAULT '';

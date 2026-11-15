@@ -174,7 +174,7 @@ export function useResearchWorkspace() {
   }, []);
 
   const startRun = useCallback(
-    async (prompt: string) => {
+    async (prompt: string, refresh = false) => {
       if (!project || streaming || streamController.current || !prompt.trim()) {
         return false;
       }
@@ -249,7 +249,7 @@ export function useResearchWorkspace() {
         const response = await fetch(
           `/api/research/projects/${project.id}/runs`,
           {
-            body: JSON.stringify({ prompt: prompt.trim() }),
+            body: JSON.stringify({ prompt: prompt.trim(), refresh }),
             credentials: "same-origin",
             headers: { "Content-Type": "application/json" },
             method: "POST",

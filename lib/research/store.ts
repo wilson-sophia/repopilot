@@ -10,6 +10,13 @@ import {
 } from "./config";
 import { chunkDocument, embedTexts } from "./embeddings";
 import {
+  chunkSearchText,
+  enrichChunks,
+  fuseCandidates,
+  planRetrieval,
+  rerankCandidates,
+} from "./retrieval";
+import {
   researchChunks as chunks,
   researchDocuments as documents,
   researchProjects as projects,
@@ -37,8 +44,10 @@ function documentView(row: typeof documents.$inferSelect): ResearchDocument {
 function runView(row: typeof runs.$inferSelect): ResearchRun {
   return {
     ...row,
+    checkpoint: row.checkpoint ?? undefined,
     error: row.error ?? undefined,
     finishedAt: row.finishedAt ?? undefined,
+    memory: row.memory ?? undefined,
   };
 }
 export async function listProjects(
@@ -142,7 +151,11 @@ export async function importDocument(
   }
   const id = randomUUID();
   try {
-    const embeddings = await embedTexts(parts, signal);
+    const metadata = await enrichChunks(parts, signal);
+    const searchTexts = parts.map((part, index) =>
+      chunkSearchText(part, metadata[index])
+    );
+    const embeddings = await embedTexts(searchTexts, signal);
     signal?.throwIfAborted();
     const row = await db.transaction(async (transaction) => {
       const [document] = await transaction
@@ -166,6 +179,8 @@ export async function importDocument(
           id: randomUUID(),
           position,
           projectId,
+          retrievalMetadata: metadata[position],
+          searchText: searchTexts[position],
         }))
       );
       await transaction
@@ -201,7 +216,9 @@ export async function searchDocuments(
   signal?: AbortSignal
 ): Promise<ResearchSource[]> {
   await requireProject(ownerId, projectId);
-  const [embedding] = await embedTexts([query], signal);
+  const plan = await planRetrieval(query, signal);
+  const [embedding] = await embedTexts([plan.query], signal);
+  signal?.throwIfAborted();
   const similarity = sql<number>`1 - (${chunks.embedding} <=> ${JSON.stringify(embedding)}::vector)`;
   const result = await db
     .select({
@@ -221,27 +238,106 @@ export async function searchDocuments(
       )
     )
     .orderBy(desc(similarity))
-    .limit(5);
-  return result
-    .filter(
-      (row) =>
-        Number(row.similarity) > (researchMode() === "demo" ? 0.08 : 0.25)
-    )
-    .map((row) => ({
-      documentId: row.documentId,
-      excerpt: row.content,
-      id: row.id,
-      kind: "document",
-      retrievedAt: new Date().toISOString(),
-      title: `${row.name} · 片段 ${row.position + 1}`,
-    }));
+    .limit(10);
+  const vectorCandidates = result.filter(
+    (row) => Number(row.similarity) > (researchMode() === "demo" ? 0.08 : 0.25)
+  );
+  // Parameters are literal substrings, not LIKE patterns or user-authored SQL.
+  const keywordScores = plan.keywords.map(
+    (keyword) =>
+      sql`CASE WHEN strpos(lower(CASE WHEN ${chunks.searchText} = '' THEN ${chunks.content} ELSE ${chunks.searchText} END), ${keyword.toLowerCase()}) > 0 OR strpos(lower(${documents.name}), ${keyword.toLowerCase()}) > 0 THEN 1 ELSE 0 END`
+  );
+  const keywordScore = keywordScores.length
+    ? sql<number>`(${sql.join(keywordScores, sql` + `)})`
+    : sql<number>`0`;
+  const keywordCandidates = keywordScores.length
+    ? await db
+        .select({
+          content: chunks.content,
+          documentId: chunks.documentId,
+          id: chunks.id,
+          keywordScore,
+          name: documents.name,
+          position: chunks.position,
+        })
+        .from(chunks)
+        .innerJoin(documents, eq(documents.id, chunks.documentId))
+        .where(
+          and(
+            eq(chunks.projectId, projectId),
+            eq(chunks.embeddingSpace, embeddingSpace()),
+            sql`${keywordScore} > 0`
+          )
+        )
+        .orderBy(desc(keywordScore), chunks.id)
+        .limit(10)
+    : [];
+  signal?.throwIfAborted();
+  const candidates = fuseCandidates([vectorCandidates, keywordCandidates]);
+  const ranked = await rerankCandidates(query, candidates, signal);
+  return ranked.map((row) => ({
+    documentId: row.documentId,
+    excerpt: row.content,
+    id: row.id,
+    kind: "document",
+    retrievedAt: new Date().toISOString(),
+    title: `${row.name} · 片段 ${row.position + 1}`,
+  }));
 }
 export async function createRun(
   ownerId: string,
   projectId: string,
-  prompt: string
+  prompt: string,
+  options: { refresh?: boolean } = {}
 ): Promise<ResearchRun> {
-  await requireProject(ownerId, projectId);
+  const project = await requireProject(ownerId, projectId);
+  const documentRows = await db
+    .select({ id: documents.id, status: documents.status })
+    .from(documents)
+    .where(eq(documents.projectId, projectId))
+    .orderBy(documents.id);
+  const scope = JSON.stringify({
+    description: project.description,
+    documents: documentRows,
+    embedding: embeddingSpace(),
+    repository: project.repository,
+  });
+  const [previous] = options.refresh
+    ? []
+    : await db
+        .select()
+        .from(runs)
+        .where(
+          and(
+            eq(runs.ownerId, ownerId),
+            eq(runs.projectId, projectId),
+            eq(runs.status, "completed"),
+            eq(runs.mode, researchMode()),
+            eq(runs.memoryScope, scope),
+            sql`${runs.createdAt} > now() - interval '24 hours'`
+          )
+        )
+        .orderBy(desc(runs.createdAt))
+        .limit(1);
+  const reusable =
+    previous &&
+    previous.sources.length <= 40 &&
+    previous.sources.every(
+      (source) => Date.now() - Date.parse(source.retrievedAt) < 86_400_000
+    );
+  const memory = reusable
+    ? {
+        history: [
+          ...(previous.memory?.history ?? []),
+          {
+            prompt: previous.prompt,
+            report: previous.report.split("## 来源索引")[0].slice(0, 2500),
+          },
+        ].slice(-3),
+        parentRunId: previous.id,
+        scope,
+      }
+    : undefined;
   const [{ total }] = await db
     .select({ total: count() })
     .from(runs)
@@ -258,13 +354,37 @@ export async function createRun(
     const [run] = await db
       .insert(runs)
       .values({
+        checkpoint: reusable
+          ? {
+              messages: [],
+              phase: "executing" as const,
+              report: "",
+              snapshot: previous.checkpoint?.snapshot,
+              steps: 0,
+              version: 1 as const,
+            }
+          : undefined,
         id: randomUUID(),
+        memory,
+        memoryScope: scope,
         mode: researchMode(),
         model: modelName(),
         ownerId,
         projectId,
         prompt,
+        sources: reusable ? previous.sources : [],
         status: "running",
+        tools: reusable
+          ? previous.tools
+              .filter(
+                (tool) =>
+                  tool.status === "completed" &&
+                  tool.name !== "getRepository" &&
+                  tool.name !== "searchIssues"
+              )
+              .slice(-20)
+              .map((tool) => ({ ...tool, reusedFromRunId: previous.id }))
+          : [],
       })
       .returning();
     return runView(run);

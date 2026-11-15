@@ -140,7 +140,7 @@ async function main() {
         RESEARCH_FIXTURES: "0",
         RESEARCH_MODE: "demo",
       },
-      stdio: ["ignore", "pipe", "pipe"],
+      stdio: ["ignore", "pipe", "pipe", "ipc"],
     }
   );
   child.stdout?.on("data", (data: Buffer) => {
@@ -281,7 +281,11 @@ async function main() {
         await context.dispose();
       } finally {
         if (child.exitCode === null) {
-          child.kill("SIGTERM");
+          if (child.connected) {
+            child.send({ type: "repopilot:shutdown" });
+          } else {
+            child.kill("SIGTERM");
+          }
         }
         exitCode = await Promise.race([
           exited,

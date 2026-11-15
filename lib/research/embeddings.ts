@@ -1,6 +1,7 @@
 import { createOpenAICompatible } from "@ai-sdk/openai-compatible";
 import { embedMany } from "ai";
 import { ResearchError, researchMode } from "./config";
+import { modelFetch } from "./model-fetch";
 
 export function terms(text: string): string[] {
   const result =
@@ -54,6 +55,7 @@ export async function embedTexts(
       process.env.EMBEDDING_BASE_URL ||
       process.env.MODEL_BASE_URL ||
       "https://api.openai.com/v1",
+    fetch: modelFetch,
     name: "research-embeddings",
   });
   try {

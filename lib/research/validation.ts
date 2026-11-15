@@ -37,5 +37,6 @@ export const projectInput = z.object({
 });
 export const runInput = z.object({
   prompt: z.string().trim().min(2).max(3000),
+  refresh: z.boolean().default(false),
 });
 export const identifier = z.uuid();

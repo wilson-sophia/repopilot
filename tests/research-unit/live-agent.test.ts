@@ -92,6 +92,14 @@ test("live tool loop returns canonical source IDs to the model and persists a ci
         const body = JSON.parse(String(init?.body)) as Record<string, unknown>;
         if (url.endsWith("/embeddings")) {
           const values = Array.isArray(body.input) ? body.input : [body.input];
+          if (values.some((value) => String(value).includes("# Deployment"))) {
+            assert.ok(
+              String(values[0]).includes(
+                "What deployment platform is required?"
+              ),
+              "Index embeddings must include hypothetical questions"
+            );
+          }
           return Response.json({
             data: values.map((_, index) => ({
               embedding: [1, 0, 0],
@@ -105,8 +113,51 @@ test("live tool loop returns canonical source IDs to the model and persists a ci
         }
         assert.equal(url, "https://model-unit.example/v1/chat/completions");
         assert.equal(body.model, "unit-chat");
+        if (body.stream !== true) {
+          return Response.json({
+            choices: [
+              {
+                finish_reason: "stop",
+                index: 0,
+                message: {
+                  content: JSON.stringify({
+                    keywords: ["deployment", "Docker Compose"],
+                    questions: ["What deployment platform is required?"],
+                  }),
+                  role: "assistant",
+                },
+              },
+            ],
+            created: 1,
+            id: "enrichment-contract",
+            model: "unit-chat",
+            object: "chat.completion",
+            usage: {
+              completion_tokens: 10,
+              prompt_tokens: 10,
+              total_tokens: 20,
+            },
+          });
+        }
         chatRequests += 1;
-        if (chatRequests === 1) {
+        if (chatRequests > 6) {
+          assert.ok(
+            JSON.stringify(body.messages).includes("部署调研"),
+            "Follow-up must include the previous answer"
+          );
+          assert.ok(
+            JSON.stringify(body.messages).includes("历史原文证据"),
+            "Follow-up must include reusable raw evidence"
+          );
+          return completionStream(
+            {
+              content: "沿用上一轮证据，部署使用 Docker Compose。[S1]",
+              role: "assistant",
+            },
+            "stop"
+          );
+        }
+        if (chatRequests <= 5) {
           return completionStream(
             {
               role: "assistant",
@@ -116,7 +167,7 @@ test("live tool loop returns canonical source IDs to the model and persists a ci
                     arguments: JSON.stringify({ query: "deployment platform" }),
                     name: "searchDocuments",
                   },
-                  id: "call_unit_docs",
+                  id: `call_unit_docs_${chatRequests}`,
                   index: 0,
                   type: "function",
                 },
@@ -129,12 +180,17 @@ test("live tool loop returns canonical source IDs to the model and persists a ci
         const toolMessage = messages.find((message) => message.role === "tool");
         assert.ok(
           toolMessage,
-          "The second model step must receive the executed tool result"
+          "The final model step must receive the executed tool result"
         );
         toolPayload = JSON.parse(String(toolMessage.content)) as Record<
           string,
           unknown
         >;
+        assert.equal(
+          body.tool_choice,
+          "none",
+          "Reserve the final step for a report instead of another tool call"
+        );
         return completionStream(
           {
             content: "# 部署调研\n项目文档要求使用 Docker Compose。[S1]\n",
@@ -179,7 +235,29 @@ test("live tool loop returns canonical source IDs to the model and persists a ci
     const stored = await getRun(ownerId, initial.id);
     assert.equal(stored.status, "completed");
     assert.equal(stored.mode, "live");
-    assert.equal(chatRequests, 2);
+    assert.equal(chatRequests, 6);
+    const followup = await createRun(
+      ownerId,
+      project.id,
+      "沿用上次资料，解释部署方案。"
+    );
+    assert.equal(followup.memory?.parentRunId, stored.id);
+    assert.equal(followup.checkpoint?.steps, 0);
+    await executeResearch(
+      ownerId,
+      followup,
+      new AbortController().signal,
+      () => {
+        /* Persisted record asserted below. */
+      }
+    );
+    const continued = await getRun(ownerId, followup.id);
+    assert.equal(continued.status, "completed");
+    assert.equal(chatRequests, 7);
+    assert.equal(continued.tools.length, stored.tools.length);
+    assert.equal(continued.tools[0].id, stored.tools[0].id);
+    assert.equal(continued.tools[0].reusedFromRunId, stored.id);
+    assert.deepEqual(continued.sources, stored.sources);
     assert.match(stored.report, /Docker Compose.*\[S1\]/);
     assert.equal(stored.sources[0].id, "S1");
     assert.ok(stored.inputTokens > 0);

@@ -111,7 +111,9 @@ export const ToolTimeline = memo(function ToolTimelineContent({
             <span>{tool.description || tool.name}</span>
             <span className="research-status-label">
               {tool.status === "completed"
-                ? "完成"
+                ? tool.reusedFromRunId
+                  ? "复用结果"
+                  : "完成"
                 : tool.status === "failed"
                   ? "失败"
                   : "执行中"}

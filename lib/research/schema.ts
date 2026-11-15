@@ -9,7 +9,12 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
-import type { ResearchSource, ToolExecution } from "./types";
+import type {
+  ResearchCheckpoint,
+  ResearchMemory,
+  ResearchSource,
+  ToolExecution,
+} from "./types";
 
 const embedding = customType<{ data: number[]; driverData: string }>({
   dataType: () => "vector",
@@ -63,9 +68,15 @@ export const researchChunks = pgTable("research_chunk", {
   projectId: uuid("project_id")
     .notNull()
     .references(() => researchProjects.id, { onDelete: "cascade" }),
+  retrievalMetadata: jsonb("retrieval_metadata")
+    .$type<{ keywords: string[]; questions: string[]; enrichment: string }>()
+    .notNull()
+    .default({ enrichment: "legacy", keywords: [], questions: [] }),
+  searchText: text("search_text").notNull().default(""),
 });
 
 export const researchRuns = pgTable("research_run", {
+  checkpoint: jsonb("checkpoint").$type<ResearchCheckpoint>(),
   createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
     .notNull()
     .defaultNow(),
@@ -74,6 +85,8 @@ export const researchRuns = pgTable("research_run", {
   finishedAt: timestamp("finished_at", { mode: "string", withTimezone: true }),
   id: uuid("id").primaryKey(),
   inputTokens: integer("input_tokens").notNull().default(0),
+  memory: jsonb("memory").$type<ResearchMemory>(),
+  memoryScope: text("memory_scope").notNull().default(""),
   mode: varchar("mode", { enum: ["demo", "live"] }).notNull(),
   model: text("model").notNull(),
   outputTokens: integer("output_tokens").notNull().default(0),

@@ -193,8 +193,8 @@ async function handler(request: Request, context: Context) {
         );
       }
       if (child === "runs" && request.method === "POST") {
-        const { prompt } = runInput.parse(await bodyJSON(request));
-        const run = await createRun(ownerId, id, prompt);
+        const { prompt, refresh } = runInput.parse(await bodyJSON(request));
+        const run = await createRun(ownerId, id, prompt, { refresh });
         const controller = new AbortController();
         let open = true;
         const stream = new ReadableStream<Uint8Array>({

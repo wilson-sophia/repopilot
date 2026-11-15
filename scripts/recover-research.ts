@@ -17,14 +17,7 @@ async function recover() {
     }
     await executeResearch(
       row.ownerId,
-      {
-        ...run,
-        inputTokens: 0,
-        outputTokens: 0,
-        report: "",
-        sources: [],
-        tools: [],
-      },
+      run,
       new AbortController().signal,
       () => {
         /* Recovery is observed through persisted-state polling. */

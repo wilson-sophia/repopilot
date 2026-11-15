@@ -3,6 +3,7 @@ import {
   bootstrapGuest,
   createProject,
   executeRun,
+  parseEvents,
   uploadDocument,
 } from "./helpers";
 
@@ -191,7 +192,51 @@ test("empty knowledge base admits insufficient evidence", async ({
   expect(run.outputTokens).toBe(0);
 });
 
-test("GitHub fixtures exercise repository and issue tools without external network", async ({
+test("follow-ups reuse project evidence while explicit refresh and document changes invalidate reuse", async ({
+  request,
+}) => {
+  const project = await createProject(request);
+  const document = await uploadDocument(
+    request,
+    project.id,
+    "Deployment uses Docker Compose."
+  );
+  const first = await executeRun(
+    request,
+    project.id,
+    "What deployment platform is used?"
+  );
+  const second = await executeRun(
+    request,
+    project.id,
+    "What deployment platform is used?"
+  );
+  expect(second.run.memory?.parentRunId).toBe(first.run.id);
+  expect(
+    second.run.tools.find((tool) => tool.name === "searchDocuments")?.id
+  ).toBe(first.run.tools.find((tool) => tool.name === "searchDocuments")?.id);
+  expect(
+    second.run.tools.some((tool) => tool.reusedFromRunId === first.run.id)
+  ).toBeTruthy();
+  const refreshedResponse = await request.post(
+    `/api/research/projects/${project.id}/runs`,
+    { data: { prompt: "What deployment platform is used?", refresh: true } }
+  );
+  const refreshed = parseEvents(await refreshedResponse.text()).findLast(
+    (event) => event.type === "done"
+  );
+  expect(refreshed?.type === "done" && refreshed.run.memory).toBeFalsy();
+  await request.delete(`/api/research/documents/${document.id}`);
+  const changed = await executeRun(
+    request,
+    project.id,
+    "What deployment platform is used?"
+  );
+  expect(changed.run.memory).toBeUndefined();
+  expect(changed.run.sources).toHaveLength(0);
+});
+
+test("GitHub fixtures exercise code evidence, repository and issue tools without external network", async ({
   request,
 }) => {
   const project = await createProject(request, {
@@ -214,6 +259,23 @@ test("GitHub fixtures exercise repository and issue tools without external netwo
     )
   ).toBeTruthy();
   expect(run.sources.some((source) => source.kind === "github")).toBeTruthy();
+  const codeSource = run.sources.find(
+    (source) => source.filePath === "src/stream.ts"
+  );
+  expect(codeSource?.excerpt).toContain("ReadableStream");
+  expect(codeSource?.url).toContain("#L1-L");
+  expect(codeSource?.commit).toMatch(/^[a-f0-9]{40}$/);
+  expect(
+    run.tools.some(
+      (tool) => tool.name === "analyzeRepository" && tool.status === "completed"
+    )
+  ).toBeTruthy();
+  const history = await request.get(`/api/research/runs/${run.id}`);
+  expect(
+    (await history.json()).run.sources.some(
+      (source: { filePath?: string }) => source.filePath === "src/stream.ts"
+    )
+  ).toBeTruthy();
 });
 
 test("permanent tool failure remains visible without invented repository evidence", async ({

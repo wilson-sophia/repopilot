@@ -124,6 +124,18 @@ async function serve() {
     };
     process.once("SIGINT", stop);
     process.once("SIGTERM", stop);
+    // Windows SIGTERM kills the launcher without invoking signal handlers.
+    // A parent test process can request the same cleanup through private IPC.
+    process.on("message", (message) => {
+      if (
+        message &&
+        typeof message === "object" &&
+        "type" in message &&
+        message.type === "repopilot:shutdown"
+      ) {
+        stop();
+      }
+    });
     child.once("error", async () => {
       await cleanup();
       process.exitCode = 1;
@@ -135,6 +147,9 @@ async function serve() {
         stopRequested && (signal === "SIGTERM" || code === 143)
           ? 0
           : (code ?? 1);
+      if (process.connected) {
+        process.disconnect();
+      }
     });
   } catch (error) {
     await cleanup();

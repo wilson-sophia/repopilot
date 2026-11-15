@@ -1,6 +1,6 @@
 # RepoPilot
 
-面向开源项目选型的调研与文档问答工作台。创建项目、导入需求文档，再通过仓库信息、Issue 与文档检索生成可回查来源的调研报告。
+面向开源项目选型的源码调研与文档问答工作台。创建项目、导入需求文档，读取固定提交下的目录与源码片段，将实现依据与需求资料对照，生成带文件行号及来源引用的报告。仓库介绍与Issue作为补充线索。
 
 基于 [Vercel Chatbot](https://github.com/vercel/chatbot) 二次开发，使用 React、TypeScript、Next.js、Node.js、AI SDK 与 PostgreSQL / pgvector。原始说明保存在 [docs/UPSTREAM_README.md](docs/UPSTREAM_README.md)，上游基线为 `c2f8235e1f3ea903ad8b7f61447c4f74164b5c58`，保留 Apache-2.0 [LICENSE](LICENSE)。
 
@@ -28,9 +28,15 @@ pnpm dev
 
 ## 跑一遍完整流程
 
+同一项目连续提问会延续最近调研记录和源码证据，优先复用已完成查询，只补查新内容。需要重新读取最新仓库时，勾选“重新查证”。记录保留、范围失效及缓存时效见 [跨轮调研说明](docs/CROSS_ROUND_MEMORY.md)。
+
+仓库调研以源码为主要实现依据：读取固定提交的目录与关键文件，支持按行补读，报告引用保留路径、行号及提交链接。介绍和Issue作为补充线索，不能替代实现证据。覆盖范围与读取限制见 [源码调研说明](docs/CODE_ANALYSIS.md)。
+
+文档检索支持入库关键词与假设性问题增强、向量和关键词双路召回及 RRF 排名融合，生成资料仅辅助检索，引用始终返回原文。现有资料可继续检索，重新导入后才会生成新的增强索引。设计、降级策略与验证方法见 [检索说明](docs/RETRIEVAL.md)。
+
 1. 创建调研项目，填写一个公开 GitHub 仓库地址。
 2. 导入 [examples/editor-requirements.md](examples/editor-requirements.md) 和 [examples/react-team-context.txt](examples/react-team-context.txt)。
-3. 提问：“结合我们的 React 和中文输入需求，分析这个项目的接入风险，列出需要核实的事项。”
+3. 提问：“先读取仓库源码，结合我们的 React 和中文输入需求，分析关键实现与接入风险，引用文件路径和行号，说明尚未读取或验证的部分。”
 4. 查看工具状态和来源，打开引用原文核对结论。
 5. 导出 Markdown 报告，再打开历史记录。
 6. 试验资料不足、无效仓库、停止生成和重新发起，观察错误与记录。
@@ -107,4 +113,4 @@ Vercel Chatbot 提供工程、鉴权和基础 UI；RepoPilot 新增项目调研�
 
 ## 2026-11-13 功能补充
 
-工作台支持编辑项目名称、描述与仓库。资料上传支持 Markdown、TXT、PDF（文字层）、DOCX，仍限制单文件 1 MiB。启动器启动时会自动重新执行中断的运行任务，保留任务 ID；部分报告会重新生成，并非模型 token 级续接。当前恢复机制用于单实例部署。最新验证范围见 docs/VERIFICATION.md。
+工作台支持编辑项目名称、描述与仓库。资料上传支持 Markdown、TXT、PDF（文字层）、DOCX，仍限制单文件 1 MiB。启动器启动时从已保存的模型步骤检查点继续中断任务，保留任务ID、已完成工具结果、引用来源和源码提交快照；只重试未完成的步骤，不清空从头跑。未完成的模型输出需重新生成，并非Token级续接。当前机制用于单实例部署，主动取消的任务不恢复。设计见 [检查点恢复](docs/CHECKPOINT_RECOVERY.md)，验证范围见 docs/VERIFICATION.md。
